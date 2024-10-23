@@ -1,13 +1,26 @@
+require('dotenv').config();  // Load environment variables from .env
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var mongoose = require('mongoose');  // Add Mongoose
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
 var app = express();
+
+// MongoDB Atlas connection using credentials from .env
+const mongoURI = process.env.MONGO_URI;
+
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('MongoDB Atlas connected successfully'))
+  .catch((err) => console.error('MongoDB Atlas connection error:', err));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
