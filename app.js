@@ -17,14 +17,11 @@ const photosRouter = require('./routes/photos');
 const app = express();
 
 // MongoDB Atlas connection
-const mongoURI = process.env.MONGO_URI;
+const mongoURI = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.bnsdm.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority&appName=Cluster0`;
 
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-    .then(() => console.log('MongoDB Atlas connected successfully'))
-    .catch((err) => console.error('MongoDB Atlas connection error:', err));
+mongoose.connect(mongoURI)
+  .then(() => console.log('MongoDB Atlas connected successfully'))
+  .catch((err) => console.error('MongoDB Atlas connection error:', err));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -46,11 +43,11 @@ app.use('/api/schedule-items', scheduleItemsRouter);
 app.use('/api/photos', photosRouter);
 
 // Error handling
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // Provide error only in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
