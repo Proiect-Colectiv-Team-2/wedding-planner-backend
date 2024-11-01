@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const cors = require('cors');
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
@@ -17,7 +18,7 @@ const photosRouter = require('./routes/photos');
 const app = express();
 
 // MongoDB Atlas connection
-const mongoURI = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.bnsdm.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority&appName=Cluster0`;
+const mongoURI = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
 mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB Atlas connected successfully'))
@@ -28,6 +29,10 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 // Middleware
+app.use(cors({
+  origin: 'http://localhost:5173', // We will remove this when the frontend is launched by this backend
+  credentials: true,
+}));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
