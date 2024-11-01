@@ -1,3 +1,5 @@
-DB_NAME=
-DB_USERNAME=
-DB_PASSWORD=
+DB_USERNAME=chris
+DB_PASSWORD=parola341
+DB_NAME=wedding
+DB_HOST=cluster0.gpc15.mongodb.net
+
