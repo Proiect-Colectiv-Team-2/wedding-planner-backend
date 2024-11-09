@@ -16,6 +16,7 @@
     "mongoose": "^8.7.3",
     "morgan": "~1.9.1",
     "nodemon": "^3.1.7",
+    "postman": "^0.2.0",
     "wedding-planner-backend": "file:"
   }
 }
