@@ -10,6 +10,25 @@ exports.getAllEvents = async (req, res) => {
     }
 };
 
+// Get a single event by ID
+exports.getEventById = async (req, res) => {
+    try {
+        const event = await Event.findById(req.params.id)
+            .populate('organizers', 'email firstName lastName') // Populate organizers with selected fields
+            .populate('invitations') // Populate invitations
+            .populate('scheduleItems') // Populate schedule items
+            .populate('photos'); // Populate photos
+
+        if (!event) {
+            return res.status(404).json({ message: 'Event not found' });
+        }
+
+        res.json(event);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 exports.createEvent = async (req, res) => {
     const event = new Event({
         name: req.body.name,

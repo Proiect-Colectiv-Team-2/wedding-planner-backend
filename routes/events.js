@@ -1,17 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const eventController = require('../controllers/eventController');
+// const { authenticate, authorize } = require('../middleware/authMiddleware');
 
-// GET /events - Get all events
+// Routes related to Events (example with auth)
+// router.get('/', authenticate, eventController.getAllEvents);
+// router.post('/', authenticate, authorize('Organizer'), eventController.createEvent);
+// router.get('/:id', authenticate, eventController.getEventById);
+// router.put('/:id', authenticate, authorize('Organizer'), eventController.updateEvent);
+// router.delete('/:id', authenticate, authorize('Organizer'), eventController.deleteEvent);
+
 router.get('/', eventController.getAllEvents);
-
-// Post/events - Create event
 router.post('/', eventController.createEvent);
-
-// PUT /events - Modify event
+router.get('/:id', eventController.getEventById);
 router.put('/:id', eventController.updateEvent);
-
-// DELETE /events - Delete event
 router.delete('/:id', eventController.deleteEvent);
 
 module.exports = router;
