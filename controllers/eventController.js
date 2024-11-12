@@ -6,6 +6,7 @@ const isValidName = (name) => /^[A-Za-z0-9\s]+$/.test(name) && name.length <= 10
 // Function to validate event address
 const isValidAddress = (address) => /^[A-Za-z0-9\s,.\-\/]+$/.test(address) && address.length <= 100;
 
+
 // Get all events
 exports.getAllEvents = async (req, res) => {
     try {
