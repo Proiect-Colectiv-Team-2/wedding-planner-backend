@@ -14,6 +14,7 @@ const eventsRouter = require('./routes/events');
 const invitationsRouter = require('./routes/invitations');
 const scheduleItemsRouter = require('./routes/scheduleItems');
 const photosRouter = require('./routes/photos');
+const authRouter = require('./routes/auth');
 
 const app = express();
 
@@ -46,6 +47,8 @@ app.use('/api/events', eventsRouter);
 app.use('/api/invitations', invitationsRouter);
 app.use('/api/schedule-items', scheduleItemsRouter);
 app.use('/api/photos', photosRouter);
+
+app.use('/api/auth', authRouter);
 
 // Error handling
 app.use(function (req, res, next) {
