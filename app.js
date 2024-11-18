@@ -3,6 +3,7 @@ require('dotenv').config();
 const cors = require('cors');
 const createError = require('http-errors');
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
@@ -24,6 +25,15 @@ mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB Atlas connected successfully'))
   .catch((err) => console.error('MongoDB Atlas connection error:', err));
 
+// Ensure the uploads/eventPhotos directory exists
+const uploadDir = path.join(__dirname, 'uploads', 'eventPhotos');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('Created directory:', uploadDir);
+} else {
+  console.log('Directory already exists:', uploadDir);
+}
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -38,6 +48,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/', indexRouter);
