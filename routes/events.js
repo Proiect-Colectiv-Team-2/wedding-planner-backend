@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const eventController = require('../controllers/eventController');
+const participantController = require('../controllers/participantController');
 const multer = require('multer');
 const path = require('path');
 
@@ -36,5 +37,10 @@ router.post('/', upload.single('photo'), eventController.createEvent);
 router.get('/:id', eventController.getEventById);
 router.put('/:id', upload.single('photo'), eventController.updateEvent);
 router.delete('/:id', eventController.deleteEvent);
+
+// Participant Routes
+router.post("/:eventId/participants", participantController.createParticipant);
+router.get("/:eventId/participants", participantController.getParticipants);
+router.delete("/:eventId/participants/:userId", participantController.removeParticipant);
 
 module.exports = router;

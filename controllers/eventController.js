@@ -4,6 +4,12 @@ const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
 
+// Function to validate event name
+const isValidName = (name) => /^[A-Za-z0-9\s]+$/.test(name) && name.length <= 100;
+
+// Function to validate event address
+const isValidAddress = (address) => /^[A-Za-z0-9\s,.\-\/]+$/.test(address) && address.length <= 100;
+
 // Get all events
 exports.getAllEvents = async (req, res) => {
     try {
@@ -40,6 +46,20 @@ exports.createEvent = async (req, res) => {
         let organizers = req.body.organizers;
         if (!Array.isArray(organizers)) {
             organizers = [organizers];
+        }
+
+        // Validation for Event Name
+        if (!isValidName(req.body.name)) {
+            return res.status(400).json({
+                message: 'Event name must contain only letters, numbers, and spaces and be no longer than 100 characters.'
+            });
+        }
+
+        // Validation for Event Address
+        if (!isValidAddress(req.body.address)) {
+            return res.status(400).json({
+                message: 'Event address must contain only letters, numbers, spaces, and ,.-/ and be no longer than 100 characters.'
+            });
         }
 
         // Create the event first without photos
@@ -145,6 +165,20 @@ exports.updateEvent = async (req, res) => {
             address: req.body.address,
         };
 
+        // Validation for Event Name
+        if (req.body.name && !isValidName(req.body.name)) {
+            return res.status(400).json({
+                message: 'Event name must contain only letters, numbers, and spaces and be no longer than 100 characters.'
+            });
+        }
+
+        // Validation for Event Address
+        if (req.body.address && !isValidAddress(req.body.address)) {
+            return res.status(400).json({
+                message: 'Event address must contain only letters, numbers, spaces, and ,.-/ and be no longer than 100 characters.'
+            });
+        }
+
         // Update the event details first
         const updatedEvent = await Event.findByIdAndUpdate(id, updateData, { new: true });
 
@@ -189,21 +223,21 @@ exports.updateEvent = async (req, res) => {
             const photoUser = req.body.photoUser;
 
             // Create the new Photo document
-            const photo = new Photo({
+            const newPhoto = new Photo({
                 event: updatedEvent._id,
                 user: photoUser,
                 photoURL: photoURL,
             });
 
-            const newPhoto = await photo.save();
+            await newPhoto.save();
+            console.log(`New photo added: ${newPhoto._id}`);
 
             // Add the new photo's ID to the beginning of the photos array
             updatedEvent.photos.unshift(newPhoto._id);
 
             // Save the updated event with the new photo
             await updatedEvent.save();
-
-            console.log('New photo added:', newPhoto._id);
+            console.log(`Updated Event with new Photo: ${newPhoto._id}`);
         }
 
         // Optionally, populate the photos field before sending the response
