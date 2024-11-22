@@ -1,9 +1,18 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
 
 const User = require('../models/User');
 
 const signup = async (req, res, next) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({
+            message: 'Invalid data provided.',
+            errors: errors.array()
+        })
+    }
 
     const { firstName, lastName, email, password, role } = req.body;
 
@@ -64,6 +73,16 @@ const signup = async (req, res, next) => {
 
 
 const login = async (req, res, next) => {
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        return res.status(422).json({
+            message: 'Invalid data provided.',
+            errors: errors.array()
+        })
+    }
+
     const { email, password } = req.body;
 
     let existingUser;
@@ -75,7 +94,7 @@ const login = async (req, res, next) => {
     }
 
     if (!existingUser) {
-        return res.status(500).json({ message: 'Invalid credentials provided.' });
+        return res.status(422).json({ message: 'Invalid credentials provided.' });
     }
 
     let isValidPassword = false;
@@ -86,7 +105,7 @@ const login = async (req, res, next) => {
     }
 
     if (!isValidPassword) {
-        return res.status(500).json({ message: 'Invalid credentials provided.' });
+        return res.status(422).json({ message: 'Invalid credentials provided.' });
     }
 
 
