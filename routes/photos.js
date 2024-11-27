@@ -1,8 +1,8 @@
 const express = require('express');
+const { getPhotosByEventId } = require('../controllers/photoController');
 const router = express.Router();
-const photoController = require('../controllers/photoController');
 
-// GET /photos - Get all photos
-router.get('/', photoController.getAllPhotos);
+// Route to get all photos for a specific event
+router.get('/events/:id/photos', getPhotosByEventId);
 
 module.exports = router;
