@@ -1,5 +1,6 @@
 const Photo = require('../models/Photo');
 const Event = require('../models/Event');
+const User = require('../models/User');
 const fs = require('fs');
 const path = require('path');
 
@@ -19,15 +20,27 @@ exports.getAllPhotos = async (req, res) => {
 exports.addPhotoToEvent = async (req, res) => {
     try {
         console.log('Received request to upload photo');
-        
+
         const { eventId, userId } = req.body;
         console.log('Event ID:', eventId, 'User ID:', userId);
-        
+
+        // Validate eventId and userId
+        if (!eventId || !userId) {
+            return res.status(400).json({ message: 'eventId and userId are required.' });
+        }
+
         // Check if the event exists
         const event = await Event.findById(eventId);
         if (!event) {
             console.log('Event not found');
             return res.status(404).json({ message: 'Event not found' });
+        }
+
+        // Check if the user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            console.log('User not found');
+            return res.status(404).json({ message: 'User not found' });
         }
 
         // Check if a file is uploaded
@@ -36,9 +49,6 @@ exports.addPhotoToEvent = async (req, res) => {
             return res.status(400).json({ message: 'No photo file uploaded' });
         }
 
-        // Log the uploaded file details
-        console.log('Uploaded file details:', req.file);
-
         // Construct the photo URL
         const photoURL = `${req.protocol}://${req.get('host')}/uploads/eventPhotos/${req.file.filename}`;
         console.log('Constructed photo URL:', photoURL);
@@ -46,7 +56,7 @@ exports.addPhotoToEvent = async (req, res) => {
         // Create the Photo document
         const newPhoto = new Photo({
             event: event._id,
-            user: userId,
+            user: userId, // Use the actual userId
             photoURL: photoURL,
         });
 
@@ -61,7 +71,6 @@ exports.addPhotoToEvent = async (req, res) => {
 
         // Optionally populate photos in the response
         const updatedEvent = await Event.findById(eventId).populate('photos');
-        console.log('Updated event with populated photos:', updatedEvent);
 
         res.status(201).json({
             message: 'Photo uploaded successfully',
