@@ -5,4 +5,8 @@ const scheduleItemController = require('../controllers/scheduleItemController');
 // GET /scheduleitems - Get all schedule items
 router.get('/', scheduleItemController.getAllScheduleItems);
 
+router.post('/', scheduleItemController.createScheduleItem);
+
+router.patch('/:id', scheduleItemController.updateScheduleItem);
+
 module.exports = router;
