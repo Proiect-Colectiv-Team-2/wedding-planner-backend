@@ -39,10 +39,10 @@ router.use(authMiddleware);
 // Routes
 router.get('/', eventController.getAllEvents);
 router.post('/', userRoleMiddleware(['Organizer']), upload.single('photo'), eventController.createEvent);
+router.get('/export', eventController.exportEventsToExcel);
 router.get('/:id', eventController.getEventById);
 router.put('/:id', userRoleMiddleware(['Organizer']), upload.single('photo'), eventController.updateEvent);
 router.delete('/:id', eventController.deleteEvent);
-router.get('/export', eventController.exportEventsToExcel);
 
 // Participant Routes
 router.post("/:eventId/participants", participantController.createParticipant);
