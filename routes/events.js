@@ -4,6 +4,8 @@ const eventController = require('../controllers/eventController');
 const participantController = require('../controllers/participantController');
 const multer = require('multer');
 const path = require('path');
+const authMiddleware = require('../middlewares/authMiddleware');
+const userRoleMiddleware = require('../middlewares/userRoleMiddleware');
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
@@ -31,11 +33,13 @@ const upload = multer({
     }
 });
 
+router.use(authMiddleware);
+
 // Routes
 router.get('/', eventController.getAllEvents);
-router.post('/', upload.single('photo'), eventController.createEvent);
+router.post('/', userRoleMiddleware(['Organizer']), upload.single('photo'), eventController.createEvent);
 router.get('/:id', eventController.getEventById);
-router.put('/:id', upload.single('photo'), eventController.updateEvent);
+router.put('/:id', userRoleMiddleware(['Organizer']), upload.single('photo'), eventController.updateEvent);
 router.delete('/:id', eventController.deleteEvent);
 
 // Participant Routes

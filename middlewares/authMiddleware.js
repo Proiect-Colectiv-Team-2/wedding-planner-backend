@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 const User = require('../models/User');
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res, next) => {
     // Allow OPTIONS requests through without authentication
     if (req.method === 'OPTIONS') {
         return next();
@@ -23,15 +23,12 @@ module.exports = (req, res, next) => {
         // Verify and decode the token
         const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-        const user = User.findById(decodedToken.userId);
+        const user = await User.findById(decodedToken.userId);
         if (!user) {
             return res.status(404).json({
-                message: 'User not found.'
+                message: 'Authentication failed. User not found.'
             });
         }
-        req.userData = {
-            userId: decodedToken.userId,
-        };
 
         req.user = user;
         next();
