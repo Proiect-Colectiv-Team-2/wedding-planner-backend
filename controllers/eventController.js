@@ -3,6 +3,7 @@ const Photo = require('../models/Photo');
 const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
+const ExcelJS = require('exceljs');
 
 // Function to validate event name
 const isValidName = (name) => /^[A-Za-z0-9\s]+$/.test(name) && name.length <= 100;
@@ -253,5 +254,46 @@ exports.updateEvent = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: err.message });
+    }
+};
+
+//Export events to Excel
+exports.exportEventsToExcel = async (req, res) => {
+    try {
+        const events = await Event.find().populate('organizers', 'email firstName lastName');
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Events');
+
+        // Add headers
+        worksheet.columns = [
+            { header: 'Event Name', key: 'name', width: 30 },
+            { header: 'Start Date & Time', key: 'startDateTime', width: 30 },
+            { header: 'End Date & Time', key: 'endDateTime', width: 30 },
+            { header: 'Address', key: 'address', width: 40 },
+            { header: 'Organizers', key: 'organizers', width: 50 },
+        ];
+
+        // Add rows
+        events.forEach((event) => {
+            worksheet.addRow({
+                name: event.name,
+                startDateTime: new Date(event.startDateTime).toLocaleString(),
+                endDateTime: new Date(event.endDateTime).toLocaleString(),
+                address: event.address,
+                organizers: event.organizers.map((org) => org.email).join(', '),
+            });
+        });
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="Events.xlsx"');
+
+        // Write to response
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error exporting events to Excel' });
     }
 };
