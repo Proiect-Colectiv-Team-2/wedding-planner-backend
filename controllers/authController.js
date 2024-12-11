@@ -5,43 +5,32 @@ const User = require('../models/User');
 
 const signup = async (req, res, next) => {
 
-    const { firstName, lastName, email, password, role } = req.body;
-
-    let existingUser;
-
-
     try {
+        const { firstName, lastName, email, password, role } = req.body;
 
-        existingUser = await User.findOne({ email });
-    } catch (err) {
-        return res.status(500).json({ message: 'Signing up failed, please try again.' });
-    }
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(422).json({
+                message: 'User already exists'
+            });
+        }
 
-    if (existingUser) {
-        return res.status(409).json({ message: 'User already exists.' });
-    }
+        let hashedPassword = await bcrypt.hash(password, 12);
 
-    let hashedPassword = await bcrypt.hash(password, 12);
+        const newUser = new User({
+            firstName,
+            lastName,
+            email,
+            password: hashedPassword,
+            role,
+            eventsOrganized: [],
+            eventsParticipated: [],
+        });
 
-    const newUser = new User({
-        firstName,
-        lastName,
-        email,
-        password: hashedPassword,
-        role,
-        eventsOrganized: [],
-        eventsParticipated: [],
-    });
+        const saved = await newUser.save();
 
-    try {
-        await newUser.save();
-    } catch (err) {
-        return next(new Error('Failed to save user'))
-    }
 
-    let token;
-    try {
-        token = jwt.sign(
+        const token = jwt.sign(
             {
                 userId: newUser.id,
                 email: newUser.email
@@ -51,47 +40,37 @@ const signup = async (req, res, next) => {
                 expiresIn: '1h'
             }
         );
-    } catch (err) {
-        return res.status(500).json({ message: 'Signing up failed, please try again.' });
-    }
 
-    res.status(201).json({
-        user: newUser,
-        token
-    });
+        res.status(201).json({
+            user: newUser,
+            token
+        });
+    } catch (err) {
+        return res.status(500).json({
+            message: err.message || 'Internal Server Error'
+        });
+
+    }
 }
 
 
 const login = async (req, res, next) => {
-    const { email, password } = req.body;
-
-    let existingUser;
 
     try {
-        existingUser = await User.findOne({ email });
-    } catch (err) {
-        return res.status(500).json({ message: 'Login failed, please try again later.' });
-    }
 
-    if (!existingUser) {
-        return res.status(500).json({ message: 'Invalid credentials provided.' });
-    }
+        const { email, password } = req.body;
 
-    let isValidPassword = false;
-    try {
-        isValidPassword = await bcrypt.compare(password, existingUser.password);
-    } catch (err) {
-        return res.status(500).json({ message: 'Login failed plaese check your credentials' });
-    }
+        const existingUser = await User.findOne({ email });
+        if (!existingUser) {
+            return res.status(403).json({ message: 'User not found' });
+        }
 
-    if (!isValidPassword) {
-        return res.status(500).json({ message: 'Invalid credentials provided.' });
-    }
+        const isValidPassword = await bcrypt.compare(password, existingUser.password);
+        if (!isValidPassword) {
+            return res.status(500).json({ message: 'Incorrect password.' });
+        }
 
-
-    let token;
-    try {
-        token = jwt.sign(
+        const token = jwt.sign(
             {
                 userId: existingUser.id,
                 email: existingUser.email
@@ -101,14 +80,17 @@ const login = async (req, res, next) => {
                 expiresIn: '1h'
             }
         );
-    } catch (err) {
-        return res.status(500).json({ message: 'Logging in failed, please try again' });
-    }
 
-    res.json({
-        user: existingUser,
-        token
-    });
+        res.status(200).json({
+            user: existingUser,
+            token
+        });
+
+    } catch (err) {
+        return res.status(500), json({
+            message: err.message || 'Internal Server Error'
+        });
+    }
 }
 
 exports.signup = signup;
