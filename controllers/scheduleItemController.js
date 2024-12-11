@@ -1,5 +1,6 @@
 const ScheduleItem = require('../models/ScheduleItem');
-const Event = require('../models/Event')
+const Event = require('../models/Event');
+const {validationResult} = require('express-validator');
 
 // Get all schedule items
 exports.getAllScheduleItems = async (req, res) => {
@@ -14,6 +15,11 @@ exports.getAllScheduleItems = async (req, res) => {
 
 // Create schedule item
 exports.createScheduleItem = async (req, res) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(422).json({message: 'Invalid data provided.', errors});
+    }
+
     try {
         const { eventId, title, description, startTime, endTime } = req.body;
         const existingEvent = Event.findById(eventId);
@@ -43,6 +49,11 @@ exports.createScheduleItem = async (req, res) => {
 
 // Update schedule item
 exports.updateScheduleItem = async (req, res) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(422).json({message: 'Invalid data provided.', errors});
+    }
+    
     try {
         const scheduleItemId = req.params.id;
 
