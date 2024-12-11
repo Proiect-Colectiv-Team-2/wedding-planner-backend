@@ -9,4 +9,6 @@ router.post('/', scheduleItemController.createScheduleItem);
 
 router.patch('/:id', scheduleItemController.updateScheduleItem);
 
+router.delete('/:id', scheduleItemController.deleteScheduleItem);
+
 module.exports = router;

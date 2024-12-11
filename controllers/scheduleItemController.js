@@ -70,3 +70,20 @@ exports.updateScheduleItem = async (req, res) => {
         res.status(500).json({message: 'Internal server error'});
     }
 }
+
+// Delete schedule item
+exports.deleteScheduleItem = async (req, res) => {
+    try{
+        const scheduleItemId = req.params.id;
+        const scheduleItem = ScheduleItem.findByIdAndDelete(scheduleItemId);
+        
+        if(!scheduleItem){
+            return res.status(404).json({message: 'Schedule item not found'});
+        }
+
+        return res.status(204).send();
+    }
+    catch(err){
+        return res.status(500).json({message: 'Internal server error'});
+    }
+}
