@@ -42,7 +42,7 @@ router.post('/', userRoleMiddleware(['Organizer']), upload.single('photo'), even
 router.get('/export', eventController.exportEventsToExcel);
 router.get('/:id', eventController.getEventById);
 router.put('/:id', userRoleMiddleware(['Organizer']), upload.single('photo'), eventController.updateEvent);
-router.delete('/:id', eventController.deleteEvent);
+router.delete('/:id', userRoleMiddleware(['Organizer']), eventController.deleteEvent);
 
 // Participant Routes
 router.post("/:eventId/participants", participantController.createParticipant);

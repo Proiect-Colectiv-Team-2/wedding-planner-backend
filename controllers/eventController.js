@@ -1,5 +1,6 @@
 const Event = require('../models/Event');
 const Photo = require('../models/Photo');
+const User = require('../models/User');
 const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
@@ -11,10 +12,33 @@ const isValidName = (name) => /^[A-Za-z0-9\s]+$/.test(name) && name.length <= 10
 // Function to validate event address
 const isValidAddress = (address) => /^[A-Za-z0-9\s,.\-\/]+$/.test(address) && address.length <= 100;
 
+const isCurrentUsersEvent = (user, eventId) => {
+    const organized = user.eventsOrganized.filter(id => id.toString() === eventId);
+    const participated = user.eventsParticipated.filter(id => id.toString() === eventId);
+
+    return organized.length || participated.length;
+}
+
 // Get all events
 exports.getAllEvents = async (req, res) => {
+
+    const userId = req.user._id;
+
     try {
-        const events = await Event.find().populate('organizers invitations scheduleItems photos');
+
+        const user = await User.findById(userId).select('eventsOrganized eventsParticipated');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const uniqueEventIds = Array.from(new Set([
+            ...user.eventsOrganized.map(id => id.toString()),
+            ...user.eventsParticipated.map(id => id.toString())
+        ]));
+
+        const events = await Event.find({ _id: { $in: uniqueEventIds } })
+            .populate('organizers invitations scheduleItems photos');
+
         res.json(events);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -23,8 +47,28 @@ exports.getAllEvents = async (req, res) => {
 
 // Get a single event by ID
 exports.getEventById = async (req, res) => {
+
     try {
-        const event = await Event.findById(req.params.id)
+        const user = req.user;
+        const eventId = req.params.id;
+
+        if (!isCurrentUsersEvent(user, eventId)) {
+
+            return res.status(404).json({
+                message: 'Event not found.'
+            });
+        }
+
+        const organized = user.eventsOrganized.filter(id => id.toString() === eventId);
+        const participated = user.eventsParticipated.filter(id => id.toString() === eventId);
+
+        if (!organized.length && !participated.length) {
+            return res.status(404).json({
+                message: 'Event not found.'
+            });
+        }
+
+        const event = await Event.findById(eventId)
             .populate('organizers', 'email firstName lastName') // Populate organizers with selected fields
             .populate('invitations') // Populate invitations
             .populate('scheduleItems') // Populate schedule items
@@ -77,6 +121,17 @@ exports.createEvent = async (req, res) => {
 
         const newEvent = await event.save();
 
+        // Update each organizer's eventsOrganized array
+        await Promise.all(
+            organizers.map(async (organizerId) => {
+                await User.findByIdAndUpdate(
+                    organizerId,
+                    { $push: { eventsOrganized: newEvent._id } },
+                    { new: true, useFindAndModify: false }
+                );
+            })
+        );
+
         // Check if a file was uploaded
         if (req.file) {
             // Create the photoURL with full URL
@@ -117,10 +172,20 @@ exports.createEvent = async (req, res) => {
     }
 };
 
+
 // Delete an event
 exports.deleteEvent = async (req, res) => {
     try {
-        const event = await Event.findByIdAndDelete(req.params.id);
+
+        const eventId = req.params.id;
+        const user = req.user;
+        if (!isCurrentUsersEvent(user, eventId)) {
+            return res.status(404).json({
+                message: 'Event not found.'
+            });
+        }
+
+        const event = await Event.findByIdAndDelete(eventId);
 
         if (!event) {
             return res.status(404).json({ message: 'Event not found' });
@@ -156,7 +221,14 @@ exports.deleteEvent = async (req, res) => {
 // Update an existing event
 exports.updateEvent = async (req, res) => {
     try {
-        const { id } = req.params;
+
+        const eventId = req.params.id;
+        const user = req.user;
+        if (!isCurrentUsersEvent(user, eventId)) {
+            return res.status(404).json({
+                message: 'Event not found.'
+            });
+        }
 
         // Prepare the update object
         const updateData = {
@@ -181,7 +253,7 @@ exports.updateEvent = async (req, res) => {
         }
 
         // Update the event details first
-        const updatedEvent = await Event.findByIdAndUpdate(id, updateData, { new: true });
+        const updatedEvent = await Event.findByIdAndUpdate(eventId, updateData, { new: true });
 
         if (!updatedEvent) {
             return res.status(404).json({ message: 'Event not found' });
