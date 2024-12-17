@@ -1,7 +1,22 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+const { sendEmail } = require('../utils/emailService');
 const User = require('../models/User');
+
+
+const generateJwt = (user, expiresIn = '1h') => {
+    return jwt.sign(
+        {
+            userId: user._id,
+            email: user.email
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn
+        }
+    );
+}
 
 const signup = async (req, res, next) => {
 
@@ -30,19 +45,10 @@ const signup = async (req, res, next) => {
         const saved = await newUser.save();
 
 
-        const token = jwt.sign(
-            {
-                userId: newUser.id,
-                email: newUser.email
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: '1h'
-            }
-        );
+        const token = generateJwt(saved);
 
         res.status(201).json({
-            user: newUser,
+            user: saved,
             token
         });
     } catch (err) {
@@ -70,16 +76,7 @@ const login = async (req, res, next) => {
             return res.status(500).json({ message: 'Incorrect password.' });
         }
 
-        const token = jwt.sign(
-            {
-                userId: existingUser.id,
-                email: existingUser.email
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: '1h'
-            }
-        );
+        const token = generateJwt(existingUser);
 
         res.status(200).json({
             user: existingUser,
@@ -93,5 +90,52 @@ const login = async (req, res, next) => {
     }
 }
 
+
+const sendResetPassword = async (req, res) => {
+
+    try {
+
+        const { userId } = req.params;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            res.status(404).json({
+                message: 'User not found.'
+            });
+        }
+
+        const expiresIn = '15m';
+        const token = generateJwt(user, expiresIn);
+
+        user.passwordResetToken = token;
+        await user.save();
+
+        const resetLink = `${req.protocol}://${req.get('host')}/reset-password/${token}`;
+        await sendEmail(user.email, 'Password reset', `
+
+            <div>
+                <h3>Dear ${user.firstName},</h3>
+
+            <p>Please click <a href="${resetLink}">here</a> to reset your password.</p>
+            <p>Valid for ${expiresIn} minutes.</p>
+
+            <p>${resetLink}</p>
+
+            <p>Kind regards,</p>
+            <p>Wedding planner App, Team 2</p>
+            </div>`);
+
+        res.status(200).json({
+            message: 'Password reset successfully. Please check your inbox.'
+        });
+    } catch (err) {
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            error: err
+        });
+    }
+}
+
 exports.signup = signup;
 exports.login = login;
+exports.sendResetPassword = sendResetPassword;
