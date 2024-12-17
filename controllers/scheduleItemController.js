@@ -82,15 +82,18 @@ exports.updateScheduleItem = async (req, res) => {
     }
 }
 
+
 // Delete schedule item
 exports.deleteScheduleItem = async (req, res) => {
     try{
         const scheduleItemId = req.params.id;
-        const scheduleItem = ScheduleItem.findByIdAndDelete(scheduleItemId);
+        const scheduleItem = ScheduleItem.findById(scheduleItemId);
         
         if(!scheduleItem){
             return res.status(404).json({message: 'Schedule item not found'});
         }
+
+        await scheduleItem.deleteOne();
 
         return res.status(204).send();
     }
