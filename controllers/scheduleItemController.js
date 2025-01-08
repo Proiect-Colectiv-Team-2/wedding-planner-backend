@@ -22,7 +22,7 @@ exports.createScheduleItem = async (req, res) => {
 
     try {
         const { eventId, title, description, startTime, endTime } = req.body;
-        const existingEvent = Event.findById(eventId);
+        const existingEvent = await Event.findById(eventId);
 
         if (!existingEvent)
             return res.status(404).json({ message: 'Event not found' });
@@ -33,7 +33,7 @@ exports.createScheduleItem = async (req, res) => {
 
         await scheduleItem.save();
 
-        existingEvent.scheduleItems.push(scheduleItem._id);
+        existingEvent.scheduleItems.push(scheduleItem);
 
         await existingEvent.save();
 
@@ -43,7 +43,7 @@ exports.createScheduleItem = async (req, res) => {
         });
     }
     catch (err) {
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: 'Internal server error', error: err});
     }
 }
 
