@@ -95,29 +95,29 @@ const sendResetPassword = async (req, res) => {
 
     try {
 
-        const { userId } = req.params;
+        const { email } = req.body;
+        console.log(email);
 
-        const user = await User.findById(userId);
+        const user = await User.findOne({ email });
         if (!user) {
             res.status(404).json({
                 message: 'User not found.'
             });
         }
 
-        const expiresIn = '15m';
-        const token = generateJwt(user, expiresIn);
+        const token = generateJwt(user);
 
         user.passwordResetToken = token;
         await user.save();
 
-        const resetLink = `${req.protocol}://${req.get('host')}/reset-password/${token}`;
+        const resetLink = `http://localhost:5173/reset-password/?token=${token}`;
         await sendEmail(user.email, 'Password reset', `
 
             <div>
                 <h3>Dear ${user.firstName},</h3>
 
             <p>Please click <a href="${resetLink}">here</a> to reset your password.</p>
-            <p>Valid for ${expiresIn} minutes.</p>
+            <p>Valid for 15 minutes.</p>
 
             <p>${resetLink}</p>
 
@@ -126,7 +126,7 @@ const sendResetPassword = async (req, res) => {
             </div>`);
 
         res.status(200).json({
-            message: 'Password reset successfully. Please check your inbox.'
+            message: 'Password reset successfully. Please check your email inbox.'
         });
     } catch (err) {
         return res.status(500).json({
@@ -136,6 +136,41 @@ const sendResetPassword = async (req, res) => {
     }
 }
 
+
+const resetPassword = async (req, res) => {
+
+    try {
+
+        const { user } = req;
+        const { password, confirmPassword } = req.body;
+
+        if (password !== confirmPassword) {
+            return res.status(404).json({
+                message: 'Passwords do not match.'
+            });
+        }
+
+
+        user.password = password;
+        user.passwordResetToken = null;
+
+        await user.save();
+
+        res.status(200).json({
+            message: 'Password successfully reset.'
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            message: 'Internal Server Error.',
+            error: err
+        });
+    }
+
+
+};
+
 exports.signup = signup;
 exports.login = login;
 exports.sendResetPassword = sendResetPassword;
+exports.resetPassword = resetPassword;

@@ -1,6 +1,7 @@
 const express = require('express');
 const { check } = require('express-validator');
 const authController = require('../controllers/authController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -56,6 +57,7 @@ router.post('/login',
     ],
     authController.login
 );
-router.post('/:userId/reset-password', authController.sendResetPassword);
+router.post('/reset-password', authController.sendResetPassword);
+router.patch('/reset-password',authMiddleware, authController.resetPassword);
 
 module.exports = router;
