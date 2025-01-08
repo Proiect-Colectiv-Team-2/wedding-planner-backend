@@ -151,7 +151,8 @@ const resetPassword = async (req, res) => {
         }
 
 
-        user.password = password;
+        let hashedPassword = await bcrypt.hash(password, 12);
+        user.password = hashedPassword;
         user.passwordResetToken = null;
 
         await user.save();
