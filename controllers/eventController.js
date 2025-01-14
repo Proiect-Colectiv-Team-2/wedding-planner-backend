@@ -7,10 +7,10 @@ const { URL } = require('url');
 const ExcelJS = require('exceljs');
 
 // Function to validate event name
-const isValidName = (name) => name.length > 0 && name.length <= 100;
+const isValidName = (name) => /^[A-Za-z0-9\s&.'"]+$/.test(name) && name.length <= 100;
 
 // Function to validate event address
-const isValidAddress = (address) => address.length > 0 && address.length <= 100;
+const isValidAddress = (address) => /^[A-Za-z0-9\s,.\-\/]+$/.test(address) && address.length <= 100;
 
 const isCurrentUsersEvent = (user, eventId) => {
     const organized = user.eventsOrganized.filter(id => id.toString() === eventId);
